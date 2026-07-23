@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<title>مفكرتي - المواعيد والمهام</title>
+<meta name="description" content="دفتر شخصي لتسجيل المواعيد والمهام مع تكرار وتذكيرات وحالات إنجاز" />
+
+<link rel="manifest" href="./manifest.json" />
+<meta name="theme-color" content="#16233A" />
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="مفكرتي" />
+<link rel="icon" href="./icons/icon-192.png" />
+
+<style>
+:root{
+  --ink:#16233A; --ink-soft:#3A4A63; --paper:#EEF1F5; --card:#FFFFFF; --line:#DCE1E8;
+  --gold:#C98A2C; --gold-soft:#F4E3C4; --teal:#2A7F7E; --teal-soft:#DBEEEC;
+  --green:#3F7D63; --green-soft:#E1EFE6; --rust:#B34A3C; --rust-soft:#F6E1DE;
+  --stone:#8B8C89; --stone-soft:#E9E8E3;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--paper);}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans Arabic",sans-serif;
+  color:var(--ink); -webkit-tap-highlight-color:transparent;
+}
+input,textarea,button{font-family:inherit;}
+input[type="date"],input[type="time"]{direction:ltr;text-align:right;}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+
+.ribbon{background:linear-gradient(135deg,var(--ink),#223353);color:#fff;padding:20px 20px 28px;
+  clip-path:polygon(0 0,100% 0,100% 92%,96% 100%,4% 100%,0 92%);}
+.ribbon-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.ribbon-title{display:flex;align-items:center;gap:8px;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block;}
+.ribbon h1{margin:0;font-size:22px;font-weight:700;}
+.ribbon-date{margin:4px 0 0;font-size:13px;color:#C7D0DE;}
+.ribbon-actions{display:flex;gap:4px;}
+.icon-btn-ghost{background:transparent;border:none;color:rgba(255,255,255,.85);padding:8px;border-radius:10px;cursor:pointer;}
+.icon-btn-ghost:active{background:rgba(255,255,255,.15);}
+
+.container{max-width:720px;margin:-14px auto 0;padding:0 16px 40px;}
+.searchbar{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:8px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+.searchbar svg{margin:0 6px;flex-shrink:0;}
+.searchbar input{flex:1;border:none;outline:none;background:transparent;font-size:14px;padding:6px 2px;color:var(--ink);min-width:0;}
+.btn-add{display:flex;align-items:center;gap:6px;background:var(--gold);color:#fff;border:none;border-radius:12px;
+  padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;}
+.btn-add:active{transform:scale(.96);}
+
+.reminder-banner{margin-top:14px;background:var(--rust-soft);border:1px solid rgba(179,74,60,.25);border-radius:16px;padding:12px;}
+.reminder-banner-head{display:flex;align-items:center;gap:6px;padding:0 2px 8px;color:var(--rust);font-size:13px;font-weight:700;}
+.reminder-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(255,255,255,.75);
+  border-radius:12px;padding:8px 12px;margin-top:6px;}
+.reminder-item p{margin:0;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.reminder-item span{font-size:11px;color:var(--ink-soft);}
+.reminder-dismiss{flex-shrink:0;border:none;background:var(--rust);color:#fff;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;}
+
+.notif-banner{margin-top:12px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:transparent;border:1px dashed var(--line);border-radius:12px;padding:8px 10px;font-size:11px;color:var(--ink-soft);cursor:pointer;}
+
+.tabs{display:flex;gap:8px;overflow-x:auto;margin-top:18px;padding-bottom:2px;}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.chip{border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;border:1px solid var(--line);
+  background:transparent;color:var(--ink-soft);cursor:pointer;white-space:nowrap;}
+.chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.divider-v{width:1px;height:16px;background:var(--line);margin:0 2px;}
+
+.date-group{margin-top:22px;}
+.date-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.date-header .line{flex:1;height:1px;background:var(--line);}
+.date-header h3{font-size:12px;font-weight:700;color:var(--ink-soft);white-space:nowrap;margin:0;}
+
+.item-card{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:11px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.item-card.overdue{border-color:rgba(179,74,60,.4);}
+.status-btn{border:none;border-radius:999px;padding:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.item-body{min-width:0;flex:1;}
+.item-title{font-size:14px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.item-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:5px;}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700;}
+.overdue-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--rust);}
+.item-actions{display:flex;gap:2px;flex-shrink:0;}
+.icon-btn{border:none;background:transparent;padding:7px;border-radius:9px;cursor:pointer;color:var(--ink-soft);}
+.icon-btn:active{background:rgba(0,0,0,.06);}
+
+.empty-state{border:1px dashed var(--line);border-radius:18px;padding:52px 16px;text-align:center;}
+.empty-state p{margin:10px 0 0;font-size:13px;font-weight:600;color:var(--ink);}
+.empty-state small{display:block;margin-top:4px;font-size:12px;color:var(--stone);font-weight:400;}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;
+  z-index:60;padding:0;}
+@media(min-width:640px){.overlay{align-items:center;padding:16px;}}
+.modal{background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow-y:auto;
+  border-radius:22px 22px 0 0;padding:20px;}
+@media(min-width:640px){.modal{border-radius:18px;}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.modal-head h2{margin:0;font-size:16px;font-weight:700;}
+.field{margin-bottom:14px;}
+.field label{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:5px;}
+.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:9px 12px;
+  font-size:14px;outline:none;color:var(--ink);background:#fff;}
+.field textarea{resize:none;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.type-toggle{display:flex;gap:8px;margin-bottom:14px;}
+.type-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;padding:9px;
+  border:1px solid var(--line);background:transparent;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink-soft);}
+.type-btn.active[data-type="task"]{background:var(--gold-soft);color:var(--gold);border-color:var(--gold);}
+.type-btn.active[data-type="appointment"]{background:var(--teal-soft);color:var(--teal);border-color:var(--teal);}
+.recur-box{background:var(--paper);border-radius:14px;padding:12px;margin-bottom:14px;}
+.interval-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.interval-row input{width:60px;border:1px solid var(--line);border-radius:10px;padding:5px;text-align:center;font-size:13px;}
+.hint{margin:6px 0 0;font-size:11px;color:var(--stone);}
+.modal-actions{display:flex;gap:8px;margin-top:6px;}
+.modal-actions button{flex:1;border:none;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-cancel{background:var(--stone-soft);color:var(--ink);}
+.btn-save{background:var(--gold);color:#fff;}
+.btn-delete{background:var(--rust);color:#fff;}
+.err{color:var(--rust);font-size:12px;font-weight:600;margin:-6px 0 12px;}
+
+.confirm-box{background:var(--card);width:100%;max-width:360px;border-radius:18px;padding:18px;}
+.confirm-box p{margin:0;font-size:14px;font-weight:600;}
+.confirm-box small{display:block;margin-top:4px;font-size:12px;color:var(--stone);font-weight:400;}
+.hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ---------------------------------------------------------------------- */
+/* Icons                                                                   */
+/* ---------------------------------------------------------------------- */
+const ICONS = {
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  bell: '<path d="M6 9a6 6 0 0112 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 004 0"/>',
+  bellRinging: '<path d="M6 9a6 6 0 0112 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 004 0"/><path d="M3 6l2 1.5M21 6l-2 1.5"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
+  list: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M7.5 9h9M7.5 13h9M7.5 17h5"/>',
+  repeat: '<path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/>',
+  circle: '<circle cx="12" cy="12" r="8"/>',
+  play: '<circle cx="12" cy="12" r="8"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/>',
+  check: '<circle cx="12" cy="12" r="8"/><path d="M8.5 12.5l2.3 2.3L16 9.7"/>',
+  trash: '<path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a2 2 0 002 2h6a2 2 0 002-2l1-13"/>',
+  pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  download: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/>',
+  upload: '<path d="M12 21V9M7 14l5-5 5 5"/><path d="M4 5h16"/>',
+  alert: '<path d="M12 3l10 18H2z"/><path d="M12 9v5M12 17.5v.01"/>',
+};
+function icon(name, { size = 18, color = "currentColor", sw = 2 } = {}) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">${ICONS[name] || ""}</svg>`;
+}
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+/* ---------------------------------------------------------------------- */
+/* Meta                                                                    */
+/* ---------------------------------------------------------------------- */
+const C = { ink:"#16233A", inkSoft:"#3A4A63", teal:"#2A7F7E", tealSoft:"#DBEEEC", gold:"#C98A2C", goldSoft:"#F4E3C4",
+  green:"#3F7D63", greenSoft:"#E1EFE6", rust:"#B34A3C", rustSoft:"#F6E1DE", stone:"#8B8C89", stoneSoft:"#E9E8E3" };
+const TYPE_META = {
+  appointment: { label: "موعد", icon: "calendar", color: C.teal, soft: C.tealSoft },
+  task: { label: "مهمة", icon: "list", color: C.gold, soft: C.goldSoft },
+};
+const STATUS_ORDER = ["not_started", "in_progress", "completed"];
+const STATUS_META = {
+  not_started: { label: "لم يبدأ", color: C.stone, soft: C.stoneSoft, icon: "circle" },
+  in_progress: { label: "قيد التنفيذ", color: C.teal, soft: C.tealSoft, icon: "play" },
+  completed: { label: "مكتمل", color: C.green, soft: C.greenSoft, icon: "check" },
+};
+const RECUR_LABEL = { none: "بدون تكرار", daily: "يومي", weekly: "أسبوعي", monthly: "شهري", yearly: "سنوي" };
+const WEEKDAY_LABELS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+const REMINDER_OPTIONS = [
+  { v: 0, l: "وقت الموعد" }, { v: 5, l: "قبل 5 دقائق" }, { v: 15, l: "قبل 15 دقيقة" },
+  { v: 30, l: "قبل 30 دقيقة" }, { v: 60, l: "قبل ساعة" }, { v: 180, l: "قبل 3 ساعات" },
+  { v: 1440, l: "قبل يوم" }, { v: 2880, l: "قبل يومين" }, { v: 10080, l: "قبل أسبوع" },
+];
+const reminderLabel = (m) => REMINDER_OPTIONS.find((r) => r.v === m)?.l || `قبل ${m} د`;
+
+/* ---------------------------------------------------------------------- */
+/* Date helpers                                                            */
+/* ---------------------------------------------------------------------- */
+const pad = (n) => String(n).padStart(2, "0");
+const toDateStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseDateStr = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
+const formatTime = (dt) => {
+  const h = dt.getHours(), m = dt.getMinutes(), period = h >= 12 ? "م" : "ص", h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${pad(h12)}:${pad(m)} ${period}`;
+};
+const formatDateHeader = (dateStr, today) => {
+  const d = parseDateStr(dateStr);
+  const diff = Math.round((startOfDay(d) - startOfDay(today)) / 86400000);
+  const base = d.toLocaleDateString("ar-EG-u-nu-latn", { weekday: "long", day: "numeric", month: "long" });
+  if (diff === 0) return `اليوم • ${base}`;
+  if (diff === 1) return `غدًا • ${base}`;
+  if (diff === -1) return `أمس • ${base}`;
+  return base;
+};
+
+function generateOccurrences(task, rangeStart, rangeEnd) {
+  const start = startOfDay(parseDateStr(task.date));
+  const rec = task.recurrence || { type: "none" };
+  const hardEnd = rec.endType === "onDate" && rec.endDate ? startOfDay(parseDateStr(rec.endDate)) : null;
+  const effectiveEnd = hardEnd && hardEnd < rangeEnd ? hardEnd : rangeEnd;
+  const out = [];
+  if (start > effectiveEnd) return out;
+  if (rec.type === "none" || !rec.type) { if (start >= rangeStart && start <= effectiveEnd) out.push(start); return out; }
+  const interval = Math.max(1, Number(rec.interval) || 1);
+  if (rec.type === "daily") {
+    let cur = new Date(start), guard = 0;
+    while (cur <= effectiveEnd && guard < 1000) { if (cur >= rangeStart) out.push(new Date(cur)); cur = addDays(cur, interval); guard++; }
+  } else if (rec.type === "weekly") {
+    const weekdays = rec.weekdays && rec.weekdays.length ? rec.weekdays : [start.getDay()];
+    let weekStart = addDays(start, -start.getDay()), guard = 0;
+    while (weekStart <= effectiveEnd && guard < 400) {
+      for (const wd of weekdays) { const occ = addDays(weekStart, wd); if (occ >= start && occ >= rangeStart && occ <= effectiveEnd) out.push(occ); }
+      weekStart = addDays(weekStart, 7 * interval); guard++;
+    }
+    out.sort((a, b) => a - b);
+  } else if (rec.type === "monthly") {
+    const day = start.getDate();
+    let cur = new Date(start.getFullYear(), start.getMonth(), 1), guard = 0;
+    while (cur <= effectiveEnd && guard < 600) {
+      const lastDay = new Date(cur.getFullYear(), cur.getMonth() + 1, 0).getDate();
+      const occ = new Date(cur.getFullYear(), cur.getMonth(), Math.min(day, lastDay));
+      if (occ >= start && occ >= rangeStart && occ <= effectiveEnd) out.push(occ);
+      cur = new Date(cur.getFullYear(), cur.getMonth() + interval, 1); guard++;
+    }
+  } else if (rec.type === "yearly") {
+    let y = start.getFullYear(), guard = 0;
+    while (guard < 150) {
+      const occ = new Date(y, start.getMonth(), start.getDate());
+      if (occ > effectiveEnd) break;
+      if (occ >= start && occ >= rangeStart) out.push(occ);
+      y += interval; guard++;
+    }
+  }
+  return out;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Storage                                                                  */
+/* ---------------------------------------------------------------------- */
+const STORAGE_KEY = "mafkarti-tasks-v1", DISMISS_KEY = "mafkarti-dismissed-v1";
+function loadJSON(key, fb) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fb; } catch (e) { return fb; } }
+function saveJSON(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.error(e); } }
+const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+/* ---------------------------------------------------------------------- */
+/* State                                                                    */
+/* ---------------------------------------------------------------------- */
+const state = {
+  tasks: loadJSON(STORAGE_KEY, []),
+  dismissed: loadJSON(DISMISS_KEY, []),
+  now: new Date(),
+  tab: "today",
+  query: "",
+  typeFilter: "all",
+  statusFilter: "all",
+  notified: new Set(),
+};
+function saveTasks() { saveJSON(STORAGE_KEY, state.tasks); }
+function saveDismissed() { saveJSON(DISMISS_KEY, state.dismissed); }
+function findTask(id) { return state.tasks.find((t) => t.id === id); }
+
+function getOccurrences() {
+  const rs = addDays(startOfDay(state.now), -14), re = addDays(startOfDay(state.now), 180);
+  const list = [];
+  for (const t of state.tasks) {
+    for (const d of generateOccurrences(t, rs, re)) {
+      const dateStr = toDateStr(d);
+      const [hh, mm] = (t.time || "09:00").split(":").map(Number);
+      const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hh || 0, mm || 0);
+      const status = (t.statusByDate && t.statusByDate[dateStr]) || "not_started";
+      list.push({ task: t, dateStr, dt, status });
+    }
+  }
+  list.sort((a, b) => a.dt - b.dt);
+  return list;
+}
+function getDueReminders(occurrences) {
+  const active = [];
+  for (const occ of occurrences) {
+    if (occ.status === "completed") continue;
+    for (const off of occ.task.reminders || []) {
+      const remTime = new Date(occ.dt.getTime() - off * 60000);
+      const key = `${occ.task.id}|${occ.dateStr}|${off}`;
+      if (remTime <= state.now && occ.dt >= state.now && !state.dismissed.includes(key)) active.push({ key, occ, off, remTime });
+    }
+  }
+  active.sort((a, b) => a.remTime - b.remTime);
+  return active;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Render: shell (built once)                                              */
+/* ---------------------------------------------------------------------- */
+function buildShell() {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <div class="ribbon">
+      <div class="ribbon-row">
+        <div>
+          <div class="ribbon-title"><span class="dot"></span><h1>مفكرتي</h1></div>
+          <p class="ribbon-date mono" id="todayHeader"></p>
+        </div>
+        <div class="ribbon-actions">
+          <button class="icon-btn-ghost" id="exportBtn" title="تصدير نسخة احتياطية">${icon("download", { size: 18 })}</button>
+          <button class="icon-btn-ghost" id="importBtn" title="استيراد نسخة احتياطية">${icon("upload", { size: 18 })}</button>
+          <input type="file" id="importFile" accept="application/json" class="hidden" />
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="searchbar">
+        ${icon("search", { size: 18, color: "var(--stone)" })}
+        <input id="searchInput" placeholder="ابحث عن موعد أو مهمة..." />
+        <button class="btn-add" id="addBtn">${icon("plus", { size: 16, color: "#fff" })} إضافة</button>
+      </div>
+      <div id="reminderBanner"></div>
+      <div id="notifBanner"></div>
+      <div class="tabs" id="tabs">
+        <button class="chip" data-tab="today">اليوم</button>
+        <button class="chip" data-tab="upcoming">القادمة</button>
+        <button class="chip" data-tab="overdue" id="overdueTab">متأخرة</button>
+        <button class="chip" data-tab="all">الكل</button>
+      </div>
+      <div class="filters" id="typeFilters">
+        <button class="chip" data-typef="all">كل الأنواع</button>
+        <button class="chip" data-typef="appointment">مواعيد</button>
+        <button class="chip" data-typef="task">مهام</button>
+        <span class="divider-v"></span>
+        <button class="chip" data-statusf="all">كل الحالات</button>
+        <button class="chip" data-statusf="not_started">لم يبدأ</button>
+        <button class="chip" data-statusf="in_progress">قيد التنفيذ</button>
+        <button class="chip" data-statusf="completed">مكتمل</button>
+      </div>
+      <div id="listContainer"></div>
+    </div>
+    <div id="modalRoot"></div>
+    <div id="confirmRoot"></div>
+  `;
+
+  document.getElementById("searchInput").addEventListener("input", (e) => { state.query = e.target.value; updateList(); });
+  document.getElementById("addBtn").addEventListener("click", () => openModal(null));
+  document.getElementById("exportBtn").addEventListener("click", exportData);
+  document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+  document.getElementById("importFile").addEventListener("change", importData);
+
+  document.getElementById("tabs").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-tab]"); if (!btn) return;
+    state.tab = btn.dataset.tab; updateTabsUI(); updateList();
+  });
+  document.getElementById("typeFilters").addEventListener("click", (e) => {
+    const tf = e.target.closest("[data-typef]"); const sf = e.target.closest("[data-statusf]");
+    if (tf) { state.typeFilter = tf.dataset.typef; updateFiltersUI(); updateList(); }
+    else if (sf) { state.statusFilter = sf.dataset.statusf; updateFiltersUI(); updateList(); }
+  });
+  document.getElementById("listContainer").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-action]"); if (!btn) return;
+    const action = btn.dataset.action;
+    if (action === "cycle") cycleStatus(btn.dataset.taskId, btn.dataset.date);
+    else if (action === "edit") openModal(findTask(btn.dataset.taskId));
+    else if (action === "delete") openConfirmDelete(btn.dataset.taskId);
+  });
+  document.getElementById("reminderBanner").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-dismiss]"); if (!btn) return;
+    state.dismissed.push(btn.dataset.dismiss); saveDismissed(); updateReminderBanner(); updateList();
+  });
+}
+
+/* ---------------------------------------------------------------------- */
+/* Render: dynamic parts                                                   */
+/* ---------------------------------------------------------------------- */
+function updateTodayHeader() {
+  document.getElementById("todayHeader").textContent = state.now.toLocaleDateString("ar-EG-u-nu-latn", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
+function updateTabsUI() {
+  document.querySelectorAll("#tabs [data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === state.tab));
+}
+function updateFiltersUI() {
+  document.querySelectorAll("#typeFilters [data-typef]").forEach((b) => b.classList.toggle("active", b.dataset.typef === state.typeFilter));
+  document.querySelectorAll("#typeFilters [data-statusf]").forEach((b) => b.classList.toggle("active", b.dataset.statusf === state.statusFilter));
+}
+function updateOverdueBadge(occurrences) {
+  const n = occurrences.filter((o) => o.dt < state.now && o.status !== "completed").length;
+  document.getElementById("overdueTab").textContent = n > 0 ? `متأخرة (${n})` : "متأخرة";
+}
+function updateNotifBanner() {
+  const el = document.getElementById("notifBanner");
+  const perm = typeof Notification !== "undefined" ? Notification.permission : "unsupported";
+  if (perm !== "default") { el.innerHTML = ""; return; }
+  el.innerHTML = `<button class="notif-banner" id="notifBtn">${icon("bell", { size: 14 })} تفعيل تنبيهات المتصفح (تعمل أثناء فتح الصفحة فقط)</button>`;
+  document.getElementById("notifBtn").addEventListener("click", () => {
+    try { Notification.requestPermission().then(updateNotifBanner); } catch (e) {}
+  });
+}
+function updateReminderBanner() {
+  const occurrences = getOccurrences();
+  const due = getDueReminders(occurrences);
+  const el = document.getElementById("reminderBanner");
+  if (due.length === 0) { el.innerHTML = ""; return; }
+  el.innerHTML = `
+    <div class="reminder-banner">
+      <div class="reminder-banner-head">${icon("bellRinging", { size: 16, color: "var(--rust)" })} تذكيرات مستحقة الآن</div>
+      ${due.map((r) => `
+        <div class="reminder-item">
+          <div style="min-width:0">
+            <p>${esc(r.occ.task.title)}</p>
+            <span>${esc(reminderLabel(r.off))} • ${formatTime(r.occ.dt)}</span>
+          </div>
+          <button class="reminder-dismiss" data-dismiss="${r.key}">تم الاطلاع</button>
+        </div>`).join("")}
+    </div>`;
+  due.forEach((r) => {
+    if (state.notified.has(r.key)) return;
+    state.notified.add(r.key);
+    try { if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification(r.occ.task.title, { body: `${reminderLabel(r.off)} • ${formatTime(r.occ.dt)}` }); } catch (e) {}
+  });
+}
+
+function itemCard(o) {
+  const tMeta = TYPE_META[o.task.type] || TYPE_META.task;
+  const sMeta = STATUS_META[o.status];
+  const isOverdue = o.dt < state.now && o.status !== "completed";
+  return `
+    <div class="item-card ${isOverdue ? "overdue" : ""}">
+      <button class="status-btn" style="background:${sMeta.soft}" data-action="cycle" data-task-id="${o.task.id}" data-date="${o.dateStr}" title="اضغط لتغيير الحالة">
+        ${icon(sMeta.icon, { size: 20, color: sMeta.color, sw: 2.2 })}
+      </button>
+      <div class="item-body">
+        <p class="item-title">${esc(o.task.title)}</p>
+        <div class="item-meta">
+          <span class="mono" style="font-size:12px;color:${isOverdue ? "var(--rust)" : "var(--ink-soft)"}">${formatTime(o.dt)}</span>
+          <span class="pill" style="background:${tMeta.soft};color:${tMeta.color}">${icon(tMeta.icon, { size: 13, color: tMeta.color, sw: 2.4 })}${tMeta.label}</span>
+          ${o.task.recurrence?.type && o.task.recurrence.type !== "none" ? `<span class="pill" style="background:var(--stone-soft);color:var(--ink-soft)">${icon("repeat", { size: 13, color: "var(--ink-soft)", sw: 2.4 })}${RECUR_LABEL[o.task.recurrence.type]}</span>` : ""}
+          ${o.task.reminders?.length ? `<span class="pill" style="background:var(--gold-soft);color:var(--gold)">${icon("bell", { size: 13, color: "var(--gold)", sw: 2.4 })}${o.task.reminders.length}</span>` : ""}
+          ${isOverdue ? `<span class="overdue-tag">${icon("alert", { size: 12, color: "var(--rust)" })}متأخر</span>` : ""}
+        </div>
+      </div>
+      <div class="item-actions">
+        <button class="icon-btn" data-action="edit" data-task-id="${o.task.id}">${icon("pencil", { size: 15 })}</button>
+        <button class="icon-btn" data-action="delete" data-task-id="${o.task.id}">${icon("trash", { size: 15, color: "var(--rust)" })}</button>
+      </div>
+    </div>`;
+}
+
+function updateList() {
+  const occurrences = getOccurrences();
+  updateOverdueBadge(occurrences);
+
+  const filtered = occurrences.filter((o) => {
+    if (state.typeFilter !== "all" && o.task.type !== state.typeFilter) return false;
+    if (state.statusFilter !== "all" && o.status !== state.statusFilter) return false;
+    if (state.query.trim()) {
+      const q = state.query.trim().toLowerCase();
+      const hay = `${o.task.title} ${o.task.description || ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const todayStr = toDateStr(state.now);
+  let list;
+  if (state.tab === "today") list = filtered.filter((o) => o.dateStr === todayStr);
+  else if (state.tab === "overdue") list = filtered.filter((o) => o.dt < state.now && o.status !== "completed");
+  else if (state.tab === "upcoming") list = filtered.filter((o) => o.dt >= state.now);
+  else list = filtered;
+
+  const map = new Map();
+  for (const o of list) { if (!map.has(o.dateStr)) map.set(o.dateStr, []); map.get(o.dateStr).push(o); }
+  const grouped = Array.from(map.entries()).sort(([a], [b]) => (a < b ? -1 : 1));
+
+  const el = document.getElementById("listContainer");
+  if (grouped.length === 0) {
+    el.innerHTML = `
+      <div class="empty-state">
+        ${icon("list", { size: 28, color: "var(--stone)", sw: 1.6 })}
+        <p>${state.tab === "overdue" ? "لا شيء متأخر — كل شيء تحت السيطرة" : "لا توجد عناصر هنا بعد"}</p>
+        ${state.tab !== "overdue" ? `<small>اضغط «إضافة» لتسجيل أول موعد أو مهمة في مفكرتك</small>` : ""}
+      </div>`;
+    return;
+  }
+  el.innerHTML = grouped.map(([dateStr, items]) => `
+    <div class="date-group">
+      <div class="date-header"><span class="line"></span><h3>${formatDateHeader(dateStr, state.now)}</h3><span class="line"></span></div>
+      ${items.map(itemCard).join("")}
+    </div>`).join("");
+}
+
+function refreshAll() {
+  updateTodayHeader(); updateReminderBanner(); updateNotifBanner(); updateTabsUI(); updateFiltersUI(); updateList();
+}
+
+/* ---------------------------------------------------------------------- */
+/* Actions                                                                  */
+/* ---------------------------------------------------------------------- */
+function cycleStatus(taskId, dateStr) {
+  const t = findTask(taskId); if (!t) return;
+  t.statusByDate = t.statusByDate || {};
+  const cur = t.statusByDate[dateStr] || "not_started";
+  const next = STATUS_ORDER[(STATUS_ORDER.indexOf(cur) + 1) % STATUS_ORDER.length];
+  t.statusByDate[dateStr] = next;
+  saveTasks(); updateList(); updateReminderBanner();
+}
+function deleteTask(id) {
+  state.tasks = state.tasks.filter((t) => t.id !== id);
+  saveTasks(); closeConfirm(); updateList(); updateReminderBanner();
+}
+function exportData() {
+  const blob = new Blob([JSON.stringify(state.tasks, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = `مفكرتي-${toDateStr(state.now)}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(e) {
+  const file = e.target.files?.[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { try { const parsed = JSON.parse(reader.result); if (Array.isArray(parsed)) { state.tasks = parsed; saveTasks(); updateList(); updateReminderBanner(); } } catch (err) {} };
+  reader.readAsText(file); e.target.value = "";
+}
+
+/* ---------------------------------------------------------------------- */
+/* Modal: add / edit                                                       */
+/* ---------------------------------------------------------------------- */
+function openModal(task) {
+  const t = task || null;
+  const rec = t?.recurrence || {};
+  const recurType = rec.type || "none";
+  const weekdays = rec.weekdays || [];
+  const endType = rec.endType || "never";
+  const reminders = t?.reminders || [30];
+
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="overlay" id="modalOverlay">
+      <div class="modal" id="modalBox">
+        <div class="modal-head">
+          <h2>${t ? "تعديل العنصر" : "إضافة موعد أو مهمة"}</h2>
+          <button class="icon-btn" id="modalClose">${icon("x", { size: 18 })}</button>
+        </div>
+
+        <div class="type-toggle" id="f-type">
+          <button type="button" class="type-btn ${(!t || t.type === "task") ? "active" : ""}" data-type="task">${icon("list", { size: 15 })} مهمة</button>
+          <button type="button" class="type-btn ${t?.type === "appointment" ? "active" : ""}" data-type="appointment">${icon("calendar", { size: 15 })} موعد</button>
+        </div>
+
+        <div class="field"><label>العنوان</label><input id="f-title" placeholder="مثال: اجتماع مع الفريق" value="${esc(t?.title || "")}" /></div>
+        <div class="field"><label>ملاحظات (اختياري)</label><textarea id="f-desc" rows="2">${esc(t?.description || "")}</textarea></div>
+
+        <div class="row2" style="margin-bottom:14px">
+          <div class="field" style="margin-bottom:0"><label>التاريخ</label><input type="date" id="f-date" value="${t?.date || toDateStr(state.now)}" /></div>
+          <div class="field" style="margin-bottom:0"><label>الوقت</label><input type="time" id="f-time" value="${t?.time || "09:00"}" /></div>
+        </div>
+
+        <div class="recur-box">
+          <label style="font-size:12px;font-weight:700;color:var(--ink-soft)">التكرار</label>
+          <div class="filters" id="f-recur" style="margin-top:8px">
+            ${Object.entries(RECUR_LABEL).map(([k, l]) => `<button type="button" class="chip ${recurType === k ? "active" : ""}" data-recur="${k}">${l}</button>`).join("")}
+          </div>
+          <div id="recurExtra" class="${recurType === "none" ? "hidden" : ""}">
+            <div class="interval-row">
+              <span style="font-size:12px;color:var(--ink-soft)">كل</span>
+              <input type="number" min="1" id="f-interval" value="${rec.interval || 1}" />
+              <span style="font-size:12px;color:var(--ink-soft)" id="intervalUnit"></span>
+            </div>
+            <div class="filters" id="f-weekdays" style="margin-top:10px ${recurType === "weekly" ? "" : ";display:none"}">
+              ${WEEKDAY_LABELS.map((wl, i) => `<button type="button" class="chip ${weekdays.includes(i) ? "active" : ""}" data-day="${i}">${wl}</button>`).join("")}
+            </div>
+            <div class="filters" id="f-end" style="margin-top:10px">
+              <button type="button" class="chip ${endType === "never" ? "active" : ""}" data-end="never">بدون نهاية</button>
+              <button type="button" class="chip ${endType === "onDate" ? "active" : ""}" data-end="onDate">ينتهي بتاريخ</button>
+              <input type="date" id="f-enddate" value="${rec.endDate || ""}" style="border:1px solid var(--line);border-radius:10px;padding:5px 8px;font-size:12px;${endType === "onDate" ? "" : "display:none"}" />
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>${icon("bell", { size: 13 })} التذكيرات (يمكن اختيار أكثر من موعد)</label>
+          <div class="filters" id="f-reminders">
+            ${REMINDER_OPTIONS.map((r) => `<button type="button" class="chip ${reminders.includes(r.v) ? "active" : ""}" data-v="${r.v}">${r.l}</button>`).join("")}
+          </div>
+          <p class="hint">التذكيرات تظهر داخل التطبيق وكإشعار متصفح أثناء فتح الصفحة.</p>
+        </div>
+
+        <div id="modalErr"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" id="modalCancel">إلغاء</button>
+          <button type="button" class="btn-save" id="modalSave">${t ? "حفظ التعديلات" : "إضافة"}</button>
+        </div>
+      </div>
+    </div>`;
+
+  const intervalUnits = { daily: "يوم", weekly: "أسبوع", monthly: "شهر", yearly: "سنة" };
+  const updateIntervalUnit = () => {
+    const active = document.querySelector("#f-recur .chip.active");
+    document.getElementById("intervalUnit").textContent = intervalUnits[active?.dataset.recur] || "";
+  };
+  updateIntervalUnit();
+
+  document.getElementById("modalOverlay").addEventListener("click", (e) => { if (e.target.id === "modalOverlay") closeModal(); });
+  document.getElementById("modalClose").addEventListener("click", closeModal);
+  document.getElementById("modalCancel").addEventListener("click", closeModal);
+
+  document.getElementById("f-type").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-type]"); if (!btn) return;
+    document.querySelectorAll("#f-type .type-btn").forEach((b) => b.classList.toggle("active", b === btn));
+  });
+  document.getElementById("f-recur").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-recur]"); if (!btn) return;
+    document.querySelectorAll("#f-recur .chip").forEach((b) => b.classList.toggle("active", b === btn));
+    const val = btn.dataset.recur;
+    document.getElementById("recurExtra").classList.toggle("hidden", val === "none");
+    document.getElementById("f-weekdays").style.display = val === "weekly" ? "" : "none";
+    updateIntervalUnit();
+  });
+  document.getElementById("f-weekdays").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-day]"); if (!btn) return;
+    btn.classList.toggle("active");
+  });
+  document.getElementById("f-end").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-end]"); if (!btn) return;
+    document.querySelectorAll("#f-end .chip").forEach((b) => b.classList.toggle("active", b === btn));
+    document.getElementById("f-enddate").style.display = btn.dataset.end === "onDate" ? "" : "none";
+  });
+  document.getElementById("f-reminders").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-v]"); if (!btn) return;
+    btn.classList.toggle("active");
+  });
+
+  document.getElementById("modalSave").addEventListener("click", () => {
+    const title = document.getElementById("f-title").value.trim();
+    const date = document.getElementById("f-date").value;
+    const errEl = document.getElementById("modalErr");
+    if (!title) { errEl.innerHTML = `<p class="err">الرجاء إدخال عنوان</p>`; return; }
+    if (!date) { errEl.innerHTML = `<p class="err">الرجاء اختيار التاريخ</p>`; return; }
+
+    const type = document.querySelector("#f-type .type-btn.active")?.dataset.type || "task";
+    const recurType = document.querySelector("#f-recur .chip.active")?.dataset.recur || "none";
+    const interval = Number(document.getElementById("f-interval").value) || 1;
+    const weekdaysSel = [...document.querySelectorAll("#f-weekdays .chip.active")].map((el) => Number(el.dataset.day));
+    const endType = document.querySelector("#f-end .chip.active")?.dataset.end || "never";
+    const endDate = document.getElementById("f-enddate").value;
+    const remindersSel = [...document.querySelectorAll("#f-reminders .chip.active")].map((el) => Number(el.dataset.v)).sort((a, b) => a - b);
+
+    const form = {
+      title, description: document.getElementById("f-desc").value.trim(), type, date,
+      time: document.getElementById("f-time").value || "09:00",
+      recurrence: { type: recurType, interval, weekdays: recurType === "weekly" ? weekdaysSel : [], endType, endDate: endType === "onDate" ? endDate : null },
+      reminders: remindersSel,
+    };
+
+    if (t) Object.assign(t, form);
+    else state.tasks.push({ id: uid(), createdAt: Date.now(), statusByDate: {}, ...form });
+    saveTasks(); closeModal(); updateList(); updateReminderBanner();
+  });
+}
+function closeModal() { document.getElementById("modalRoot").innerHTML = ""; }
+
+/* ---------------------------------------------------------------------- */
+/* Confirm delete                                                          */
+/* ---------------------------------------------------------------------- */
+function openConfirmDelete(id) {
+  const root = document.getElementById("confirmRoot");
+  root.innerHTML = `
+    <div class="overlay" id="confirmOverlay" style="align-items:center;padding:16px">
+      <div class="confirm-box">
+        <p>هل تريد حذف هذا العنصر نهائيًا؟</p>
+        <small>سيتم حذف جميع تكراراته وسجل حالاته ولا يمكن التراجع عن ذلك.</small>
+        <div class="modal-actions">
+          <button class="btn-cancel" id="confirmCancel">إلغاء</button>
+          <button class="btn-delete" id="confirmDelete">حذف</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("confirmOverlay").addEventListener("click", (e) => { if (e.target.id === "confirmOverlay") closeConfirm(); });
+  document.getElementById("confirmCancel").addEventListener("click", closeConfirm);
+  document.getElementById("confirmDelete").addEventListener("click", () => deleteTask(id));
+}
+function closeConfirm() { document.getElementById("confirmRoot").innerHTML = ""; }
+
+/* ---------------------------------------------------------------------- */
+/* Boot                                                                     */
+/* ---------------------------------------------------------------------- */
+buildShell();
+updateTabsUI(); document.querySelector('#tabs [data-tab="today"]').classList.add("active");
+updateFiltersUI(); document.querySelector('#typeFilters [data-typef="all"]').classList.add("active");
+document.querySelector('#typeFilters [data-statusf="all"]').classList.add("active");
+refreshAll();
+
+setInterval(() => { state.now = new Date(); refreshAll(); }, 20000);
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("./sw.js").catch(() => {}); });
+}
+</script>
+</body>
+</html>
